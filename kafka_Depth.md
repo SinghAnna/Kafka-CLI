@@ -58,6 +58,72 @@ docker exec -it kafka kafka-topics \
 --bootstrap-server localhost:9092
 ```
 
+---
+
+# 🗑️ Delete Kafka Topics
+
+## Delete All Topics Using `xargs`
+
+Deletes all topics returned by `kafka-topics --list`.
+
+```bash id="8glt20"
+docker exec -it kafka sh -c '
+kafka-topics --list --bootstrap-server localhost:9092 |
+xargs -I {} kafka-topics --delete \
+--topic {} \
+--bootstrap-server localhost:9092
+'
+```
+
+---
+
+## Delete All Topics Using a Loop
+
+Iterates through all topics and deletes them one by one.
+
+```bash id="mx0qu6"
+docker exec -it kafka sh -c '
+for topic in $(kafka-topics --list --bootstrap-server localhost:9092)
+do
+  kafka-topics --delete \
+  --topic "$topic" \
+  --bootstrap-server localhost:9092
+done
+'
+```
+
+---
+
+## ⚠️ Exclude Internal Topics
+
+Kafka internal topics such as `__consumer_offsets` should not be deleted.
+
+```bash id="wtl4gf"
+docker exec -it kafka sh -c '
+for topic in $(kafka-topics --list --bootstrap-server localhost:9092)
+do
+  case "$topic" in
+    __*) continue ;;
+  esac
+
+  kafka-topics --delete \
+  --topic "$topic" \
+  --bootstrap-server localhost:9092
+done
+'
+```
+
+---
+
+## 📌 Notes
+
+* `kafka-topics --delete` removes only the specified topic.
+* Kafka does **not** provide a built-in `--delete-all` option.
+* Internal topics (`__consumer_offsets`, `__transaction_state`, etc.) should generally be preserved.
+* For local development, deleting and recreating Docker containers is often the fastest way to reset Kafka.
+
+
+
 ## Increase Partitions
 
 ```bash
